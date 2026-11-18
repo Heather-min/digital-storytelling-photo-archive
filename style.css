@@ -1,0 +1,446 @@
+/* ==========================================================================
+   Distance Archive: style.css
+   Dark gallery, muted monochrome UI, unhurried transitions.
+   Values that script.js changes at runtime are CSS custom properties:
+     --bg        ambient background (shifts with the viewer's time of day)
+     --fade      base transition length (slower at night)
+     --img-lum   overall photo luminance (slightly lower at night)
+   ========================================================================== */
+
+:root {
+  --bg: #0a0a0a;
+  --ui-dim: #777777;
+  --ui-mid: #a8a8a8;
+  --ui-bright: #e0e0e0;
+  --line: rgba(224, 224, 224, 0.14);
+
+  --fade: 1400ms;
+  --ease: cubic-bezier(0.45, 0, 0.2, 1);
+  --img-lum: 1;
+
+  --mono: "JetBrains Mono", "Courier New", Courier, monospace;
+
+  /* Max rendered photo size (desktop). Mobile overrides below. */
+  --frame-w: 88vw;
+  --frame-h: 84vh;
+}
+
+/* Ambient presets: script.js sets body[data-ambient] from the local hour. */
+body[data-ambient="day"]      { --bg: #0c0c0c; --img-lum: 1; }
+body[data-ambient="twilight"] { --bg: #0a0a0a; --img-lum: 0.96; }
+body[data-ambient="night"]    { --bg: #040404; --img-lum: 0.9; }
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;              /* no scrollbars; movement is intentional */
+  overscroll-behavior: none;     /* no pull-to-refresh / swipe-back bounce */
+}
+
+body {
+  background: var(--bg);
+  color: var(--ui-mid);
+  font-family: var(--mono);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 6s linear;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;   /* no long-press menu (matters for Act IV) */
+  user-select: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 1px solid var(--ui-dim);
+  outline-offset: 4px;
+}
+
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* ==========================================================================
+   Stage & generic photo frame
+   ========================================================================== */
+
+#stage {
+  position: fixed;
+  inset: 0;
+  opacity: 1;
+  transition: opacity var(--fade) var(--ease);
+}
+
+#stage.is-leaving { opacity: 0; }
+
+/* A centred view that holds one photograph. */
+.view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: pan-y pinch-zoom;  /* horizontal swipes reach our handler */
+}
+
+/*
+  .frame shrink-wraps the <img>, so percentage-positioned children
+  (hotspots, choices) line up with the photograph itself rather than the
+  letterboxed viewport. This is what keeps the Act V phone hotspot accurate
+  at every screen size.
+*/
+.frame {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+.frame > img {
+  display: block;
+  max-width: var(--frame-w);
+  max-height: var(--frame-h);
+  width: auto;
+  height: auto;
+  filter: brightness(var(--img-lum));
+}
+
+/* Slow arrival of a photograph: fade in from a slightly different scale. */
+.photo-enter {
+  opacity: 0;
+  transform: scale(1.035);
+  transition:
+    opacity calc(var(--fade) * 1.4) var(--ease),
+    transform calc(var(--fade) * 2.2) var(--ease);
+}
+.photo-enter.from-far { transform: scale(0.78); }   /* Act I → II zoom-in */
+.photo-enter.is-in    { opacity: 1; transform: scale(1); }
+.photo-exit {
+  opacity: 0 !important;
+  transition: opacity var(--fade) var(--ease) !important;
+}
+
+/* ==========================================================================
+   Forward cue (→): the only navigation glyph in the archive
+   ========================================================================== */
+
+.cue {
+  position: fixed;
+  right: max(28px, env(safe-area-inset-right));
+  bottom: max(26px, env(safe-area-inset-bottom));
+  z-index: 20;
+  padding: 14px 18px;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ui-dim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity calc(var(--fade) * 1.5) var(--ease), color 400ms;
+}
+.cue.is-visible { opacity: 1; pointer-events: auto; }
+.cue:hover      { color: var(--ui-bright); }
+
+/* ==========================================================================
+   Chrome: act indicator, DATA toggle, telemetry
+   ========================================================================== */
+
+.chrome { transition: opacity var(--fade) var(--ease); }
+
+#act-indicator {
+  position: fixed;
+  left: max(28px, env(safe-area-inset-left));
+  bottom: max(30px, env(safe-area-inset-bottom));
+  z-index: 30;
+  font-size: 11px;
+  letter-spacing: 0.32em;
+  color: var(--ui-dim);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+#data-toggle {
+  position: fixed;
+  top: max(22px, env(safe-area-inset-top));
+  right: max(24px, env(safe-area-inset-right));
+  z-index: 30;
+  padding: 8px 6px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--ui-dim);
+  opacity: 0.55;
+}
+#data-toggle:hover,
+body[data-telemetry="on"] #data-toggle { opacity: 1; color: var(--ui-bright); }
+
+#telemetry {
+  position: fixed;
+  top: max(62px, calc(env(safe-area-inset-top) + 40px));
+  right: max(24px, env(safe-area-inset-right));
+  z-index: 25;
+  padding: 14px 16px;
+  min-width: 290px;
+  max-width: calc(100vw - 48px);
+  font-size: 11px;
+  line-height: 1.85;
+  letter-spacing: 0.04em;
+  color: var(--ui-mid);
+  background: rgba(0, 0, 0, 0.62);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  white-space: pre;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition:
+    opacity calc(var(--fade) * 0.6) var(--ease),
+    transform calc(var(--fade) * 0.6) var(--ease);
+}
+body[data-telemetry="on"] #telemetry { opacity: 1; transform: none; }
+
+#telemetry .k { color: var(--ui-dim); }
+#telemetry .v { color: var(--ui-bright); }
+
+/* Act V: remove all UI chrome. */
+body[data-act="5"] .chrome {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden;
+}
+
+/* ==========================================================================
+   Act I: The Open Stage (2D field of distant nodes)
+   ========================================================================== */
+
+.field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;            /* we handle panning ourselves */
+}
+.field.is-dragging { cursor: grabbing; }
+
+.world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.world.is-approaching {
+  transition:
+    transform calc(var(--fade) * 1.6) var(--ease),
+    opacity calc(var(--fade) * 1.4) var(--ease);
+}
+
+/* Empty crosshair marks that populate the negative space. */
+.mark {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  margin: -4px 0 0 -4px;
+  opacity: 0.22;
+  pointer-events: none;
+}
+.mark::before,
+.mark::after {
+  content: "";
+  position: absolute;
+  background: var(--ui-dim);
+}
+.mark::before { left: 4px; top: 0; width: 1px; height: 9px; }
+.mark::after  { top: 4px; left: 0; height: 1px; width: 9px; }
+
+.node {
+  position: absolute;
+  display: block;
+  line-height: 0;
+  opacity: 0.38;
+  transition: opacity 900ms var(--ease), transform 900ms var(--ease);
+}
+.node img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: grayscale(0.35) brightness(calc(0.85 * var(--img-lum)));
+  transition: filter 900ms var(--ease);
+}
+.node:hover,
+.node:focus-visible { opacity: 0.95; transform: scale(1.04); }
+.node:hover img     { filter: none; }
+.node.is-visited    { opacity: 0.18; }
+.node.is-visited:hover { opacity: 0.8; }
+
+/* Coordinate label: only visible in DATA mode. */
+.node .coord {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 8px);
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  color: var(--ui-dim);
+  opacity: 0;
+  transition: opacity 600ms;
+}
+body[data-telemetry="on"] .node .coord { opacity: 0.8; }
+
+/* Focused ("approached") photograph over the field. */
+.focus {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity calc(var(--fade) * 1.2) var(--ease);
+}
+.focus.is-open { opacity: 1; pointer-events: auto; }
+.focus .frame {
+  transform: scale(0.92);
+  transition: transform calc(var(--fade) * 1.8) var(--ease);
+}
+.focus.is-open .frame { transform: scale(1); }
+
+/* ==========================================================================
+   Act III: Wonder (branching choices on the image edges)
+   ========================================================================== */
+
+.choice {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 22%;
+  display: flex;
+  align-items: center;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ui-bright);
+  opacity: 0;
+  transition: opacity 900ms var(--ease);
+}
+.choice span {
+  padding: 16px;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.9);
+}
+.choice.left  { left: 0;  justify-content: flex-start; }
+.choice.right { right: 0; justify-content: flex-end; }
+.choice.is-ready { opacity: 0.3; }                  /* barely there */
+.choice.is-ready:hover,
+.choice.is-ready:focus-visible { opacity: 0.85; }
+.choice[hidden] { display: none; }
+
+/* ==========================================================================
+   Act IV: Solitude & Focus (hold-to-focus glass)
+   The blur itself is driven frame-by-frame from script.js; this is only the
+   initial state so nothing flashes sharp before JS takes over.
+   ========================================================================== */
+
+.glass img {
+  filter: blur(16px) brightness(0.6);
+  transform: scale(1.02);        /* hides blurred edge bleed */
+}
+.glass {
+  cursor: crosshair;
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* ==========================================================================
+   Act V: Gaze
+   ========================================================================== */
+
+.gaze .frame { cursor: default; }
+
+/*
+  Invisible hotspot over the smartphone screen in the final frame.
+  Position/size are percentages of the photograph and are injected by
+  script.js from FINAL_HOTSPOT (see README). Set --hotspot-debug: 1
+  in script.js (DEBUG_HOTSPOT = true) to see the box while adjusting.
+*/
+.hotspot {
+  position: absolute;
+  left: var(--hs-left, 8%);
+  top: var(--hs-top, 51%);
+  width: var(--hs-width, 15%);
+  height: var(--hs-height, 15%);
+  cursor: default;
+  background: transparent;
+  outline: none;
+}
+.hotspot.is-debug {
+  outline: 1px dashed rgba(255, 60, 60, 0.9);
+  background: rgba(255, 60, 60, 0.12);
+}
+
+/* ==========================================================================
+   Veil (loop fade)
+   ========================================================================== */
+
+#veil {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity calc(var(--fade) * 2.4) var(--ease);
+}
+#veil.is-down { opacity: 1; pointer-events: auto; }
+
+.noscript {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font-size: 12px;
+  color: var(--ui-dim);
+}
+
+/* ==========================================================================
+   Mobile
+   ========================================================================== */
+
+@media (max-width: 640px) {
+  :root {
+    --frame-w: calc(100vw - 32px);
+    --frame-h: 78vh;
+  }
+  #telemetry {
+    left: 16px;
+    right: 16px;
+    min-width: 0;
+    font-size: 10px;
+    white-space: pre-wrap;
+  }
+  #data-toggle { right: 12px; }
+  #act-indicator { left: 16px; }
+  .cue { right: 8px; bottom: 14px; }
+  .choice { width: 30%; }
+  .choice.is-ready { opacity: 0.32; }   /* no hover on touch: a little stronger */
+}
+
+/* Respect users who ask for less motion: keep fades, drop scale moves. */
+@media (prefers-reduced-motion: reduce) {
+  .photo-enter,
+  .photo-enter.from-far { transform: none; }
+  .focus .frame { transform: none; }
+}

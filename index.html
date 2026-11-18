@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>Distance Archive</title>
+  <meta name="description" content="A silent photographic archive in five acts.">
+
+  <!-- JetBrains Mono for the telemetry layer; falls back to Courier New offline. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400&display=swap">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body data-act="0" data-ambient="day" data-telemetry="off">
+
+  <!--
+    #stage is the single viewport every act renders into.
+    script.js swaps its contents; nothing here is navigated by URL,
+    so the browser history never accumulates a "back" trail.
+  -->
+  <main id="stage" aria-label="Photographic archive"></main>
+
+  <!-- Minimal chrome. Hidden entirely in Act V via CSS (body[data-act="5"]). -->
+  <div id="act-indicator" class="chrome" aria-hidden="true">I / V</div>
+
+  <button id="data-toggle" class="chrome" type="button" aria-pressed="false">[ + DATA ]</button>
+
+  <!-- Photojournalistic telemetry overlay (filled by script.js). -->
+  <aside id="telemetry" class="chrome" aria-live="polite"></aside>
+
+  <!-- Full-screen black veil used for the silent loop from Act V back to Act I. -->
+  <div id="veil" aria-hidden="true"></div>
+
+  <noscript>
+    <p class="noscript">This archive requires JavaScript.</p>
+  </noscript>
+
+  <script src="script.js"></script>
+</body>
+</html>
